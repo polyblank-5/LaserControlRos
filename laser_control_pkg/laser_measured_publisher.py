@@ -10,7 +10,6 @@ after 100 ms laser is switched of
 '''
 class LaserMeasuredPublisher(Node):
     def __init__(self):
-        print('running')
         super().__init__('laser_measured_publisher')
         self.publisher_desired_pos = self.create_publisher(Float64, 'measured_laser', 10)
         self.publisher_laser_activity = self.create_publisher(Bool, 'laser_activation', 10)
@@ -29,7 +28,7 @@ class LaserMeasuredPublisher(Node):
         msg.data = True
         self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
-        time.sleep(1/25)
+        time.sleep(2)
         msg.data = False
         self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
@@ -42,10 +41,10 @@ class LaserMeasuredPublisher(Node):
         self.get_logger().info(f'Publishing Measured Value: {msg.data}')
 
     def laser_measured_position_callback(self, msg):
-        self.get_logger().info(f'Received {self.subscription.topic_name}: {msg.data}')
+        #self.get_logger().info(f'Received {self.subscription.topic_name}: {msg.data}')
         if self.id != msg.data[2]:
             self.id = msg.data[2]
-            self.laser_working_publisher
+            self.laser_working_publisher()
         # Process received data
         '''
         Get data from desired position
