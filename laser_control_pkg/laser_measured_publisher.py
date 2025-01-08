@@ -2,6 +2,9 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64, Float32MultiArray
 from std_msgs.msg import Bool
+from typing import List, Tuple
+import math
+
 import time 
 '''
 This node gets the weed to kill position and moves the laser in its direction
@@ -11,15 +14,24 @@ after 100 ms laser is switched of
 class LaserMeasuredPublisher(Node):
     def __init__(self):
         super().__init__('laser_measured_publisher')
-        self.publisher_desired_pos = self.create_publisher(Float64, 'measured_laser', 10)
+        self.publisher_weed_trans_pos = self.create_publisher(Float32MultiArray, 'weed_position_laser_area', 10)
         self.publisher_laser_activity = self.create_publisher(Bool, 'laser_activation', 10)
-        self.subscription = self.create_subscription(
+        self.subscription_weed_position = self.create_subscription(
             Float32MultiArray,
             'plant_laser_data_publisher',
-            self.laser_measured_position_callback,
+            self.plant_measured_position_callback,
             10)
-        self.subscription  # Prevent unused variable warning
+        self.subscription_weed_position  # Prevent unused variable warning
+        self.subscription_laser_position = self.create_subscription(
+            Float32MultiArray,
+            "laser_position_publisher",
+            self.laser_position_callback,
+            10
+        )
+
         #self.timer = self.create_timer(1.0, self.publish_measured_value)
+        self.x_weed:float = -1.0
+        self.y_weed:float = -1.0
 
         self.id:int = -1
 
@@ -33,14 +45,17 @@ class LaserMeasuredPublisher(Node):
         self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
 
+    def laser_position_callback(self, msg:Float32MultiArray):
+        x_laser, y_laser = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
+        if math.sqrt((self.x_weed - x_laser) ** 2 + (self.y_weed - y_laser) ** 2) >= 0.1:
+            self.laser_working_publisher()
 
-    def publish_measured_value(self): # timer callback
-        msg = Float64()
-        msg.data = 20.0  # Replace with your logic
-        self.publisher_desired_pos.publish(msg)
-        self.get_logger().info(f'Publishing Measured Value: {msg.data}')
-
-    def laser_measured_position_callback(self, msg):
+    def plant_measured_position_callback(self, msg:Float32MultiArray):
+        self.x_weed = msg.data[0]
+        self.y_weed = msg.data[1]
+        data_pub = Float32MultiArray()
+        data_pub.data = LaserMeasuredPublisher.transform_position(float(msg.data[0]),float(msg.data[1]))
+        self.publisher_weed_trans_pos.publish(data_pub)
         #self.get_logger().info(f'Received {self.subscription.topic_name}: {msg.data}')
         if self.id != msg.data[2]:
             self.id = msg.data[2]
@@ -61,6 +76,12 @@ class LaserMeasuredPublisher(Node):
         
         
         '''
+    def transformed_weed_position_publisher(self):
+        pass
+    
+    @staticmethod
+    def transform_position(x:float,y:float)-> List[float]:
+        return [x,y]
 
 def main(args=None):
     rclpy.init(args=args)
