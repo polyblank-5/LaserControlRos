@@ -19,19 +19,38 @@ class LaserPositionPublisher(Node):
             self.control_callback,
             10)
         self.subscription  # Prevent unused variable warning
-        self.timer = self.create_timer(1.0, self.publish_desired_value)
+        self.timer_interval = 1.0
+        self.timer = self.create_timer(self.timer_interval, self.publish_desired_value)
         self.x_weed:float = -1.0
         self.y_weed:float = -1.0
 
+        self.x_laser:float = -1.0
+        self.y_laser:float = -1.0
+
+        self.x_speed:float = 0.0
+        self.y_speed:float = 0.0
+
     def publish_desired_value(self):
         msg = Float32MultiArray()
-        msg.data = 10.0  # Replace with your logic
+        x_diff:float = self.x_weed-self.x_laser
+        y_diff:float = self.y_weed-self.y_laser
+        if x_diff > 0:
+            x_next:float = x_diff - self.x_speed*self.timer_interval
+        else:
+            x_next = x_diff + self.x_speed*self.timer_interval
+        if y_diff > 0:
+            y_next:float = y_diff - self.y_speed*self.timer_interval
+        else:
+            y_next = y_diff + self.y_speed*self.timer_interval
+        msg.data = [x_next,y_next]  # Replace with your logic
         self.publisher_.publish(msg)
         self.get_logger().info(f'Publishing Desired Value: {msg.data}')
 
     def control_callback(self, msg:Float32MultiArray):
-        self.get_logger().info(f'Received Control Input: {msg.data}')
-        # Process received data
+        #self.get_logger().info(f'Received Control Input: {msg.data}')
+        self.x_weed,self.y_weed  = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
+
+
 
 def main(args=None):
     rclpy.init(args=args)
