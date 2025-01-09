@@ -28,10 +28,10 @@ class LaserMeasuredPublisher(Node):
             self.laser_position_callback,
             10
         )
-
+        self.subscription_laser_position
         #self.timer = self.create_timer(1.0, self.publish_measured_value)
-        self.x_weed:float = -1.0
-        self.y_weed:float = -1.0
+        self.x_weed_transformed:float = -1.0
+        self.y_weed_transformed:float = -1.0
 
         self.id:int = -1
 
@@ -47,14 +47,13 @@ class LaserMeasuredPublisher(Node):
 
     def laser_position_callback(self, msg:Float32MultiArray):
         x_laser, y_laser = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
-        if math.sqrt((self.x_weed - x_laser) ** 2 + (self.y_weed - y_laser) ** 2) >= 0.1:
+        if math.sqrt((self.x_weed_transformed - x_laser) ** 2 + (self.y_weed_transformed - y_laser) ** 2) >= 0.1:
             self.laser_working_publisher()
 
     def plant_measured_position_callback(self, msg:Float32MultiArray):
-        self.x_weed = msg.data[0]
-        self.y_weed = msg.data[1]
+        self.x_weed_transformed, self.y_weed_transformed = LaserMeasuredPublisher.transform_position(float(msg.data[0]),float(msg.data[1]))
         data_pub = Float32MultiArray()
-        data_pub.data = LaserMeasuredPublisher.transform_position(float(msg.data[0]),float(msg.data[1]))
+        data_pub.data = [self.x_weed_transformed, self.y_weed_transformed]
         self.publisher_weed_trans_pos.publish(data_pub)
         #self.get_logger().info(f'Received {self.subscription.topic_name}: {msg.data}')
         if self.id != msg.data[2]:
@@ -81,6 +80,10 @@ class LaserMeasuredPublisher(Node):
     
     @staticmethod
     def transform_position(x:float,y:float)-> List[float]:
+        return [x,y]
+
+    @staticmethod
+    def retransform_position(x:float,y:float)-> List[float]:
         return [x,y]
 
 def main(args=None):
