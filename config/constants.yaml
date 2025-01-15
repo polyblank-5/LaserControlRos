@@ -1,0 +1,59 @@
+# Coordinate system and geometric constants for the laser unit
+
+# Coordinate limits
+x_min: -70
+x_max: 70
+y_min: 220
+y_max: 400
+z_min: -180
+z_max: -100
+
+# Right lower connection point
+Frx: 140      # x-coordinate of the right lower connection point
+Frz: -144     # z-coordinate of the right lower connection point
+Fry0: 403     # y max-value after reference run
+Fry_min: 200  # Minimum y-value for the right side
+
+# Left lower connection point
+Flx: -140     # x-coordinate of the left lower connection point
+Flz: -144     # z-coordinate of the left lower connection point
+Fly0: 403     # y max-value after reference run
+Fly_min: 200  # Minimum y-value for the left side
+
+# Upper motor center coordinates
+Moy: 165      # y-coordinate of the motor center
+Moz: 210      # z-coordinate of the motor center
+Fox: 0        # x-coordinate of the upper connection point
+
+# Upper connection null angle
+Mo0: 105      # Null position angle in degrees (real values ~70 to 105)
+
+# Moving coordinate system - right lower connection point
+dmrx: 50      # x-coordinate of the right lower connection point
+dmry: 75      # y-coordinate of the right lower connection point
+dmrz: -30.5   # z-coordinate of the right lower connection point
+
+# Moving coordinate system - left lower connection point
+dmlx: -50     # x-coordinate of the left lower connection point
+dmly: 75      # y-coordinate of the left lower connection point
+dmlz: -30.5   # z-coordinate of the left lower connection point
+
+# Moving coordinate system - upper connection point
+dmox: 0       # x-coordinate of the upper connection point
+dmoy: -50.5   # y-coordinate of the upper connection point
+dmoz: 23      # z-coordinate of the upper connection point
+
+# Lengths
+ls: 182       # Length of the lateral connecting rods
+lo: 300       # Length of the upper connecting rod
+lH: 120       # Length of the lever
+
+# Moving coordinate system - laser focal point
+dLx: 2        # x-coordinate of the laser focal point
+dLy: 32       # y-coordinate of the laser focal point
+dLz: 70       # z-coordinate of the laser focal point
+
+# Laser field dimensions
+bLaserfeld: 120   # Width of the laser field
+lLaserfeld: 150   # Length of the laser field
+l0Laserfeld: 200  # Initial length of the laser field
