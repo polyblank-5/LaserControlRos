@@ -4,7 +4,6 @@ from std_msgs.msg import Float64, Float32MultiArray
 from std_msgs.msg import Bool
 from typing import List, Tuple
 import math
-
 import time 
 '''
 This node gets the weed to kill position and moves the laser in its direction
@@ -44,21 +43,29 @@ class LaserMeasuredPublisher(Node):
         msg.data = False
         self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
-
+    
     def laser_position_callback(self, msg:Float32MultiArray):
+        """
+        Get position of laser
+        If laser over weed start lasering
+        """
+        self.get_logger().info(f'Getting Data from {self.subscription_laser_position.topic_name}: Laser {msg.data}')
         x_laser, y_laser = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
-        if math.sqrt((self.x_weed_transformed - x_laser) ** 2 + (self.y_weed_transformed - y_laser) ** 2) >= 0.1:
+        if math.sqrt((self.x_weed_transformed - x_laser) ** 2 + (self.y_weed_transformed - y_laser) ** 2) <= 0.5:
             self.laser_working_publisher()
-
+    
     def plant_measured_position_callback(self, msg:Float32MultiArray):
+        """
+        Publish transformed plant position
+        """
         self.x_weed_transformed, self.y_weed_transformed = LaserMeasuredPublisher.transform_position(float(msg.data[0]),float(msg.data[1]))
         data_pub = Float32MultiArray()
         data_pub.data = [self.x_weed_transformed, self.y_weed_transformed]
         self.publisher_weed_trans_pos.publish(data_pub)
-        #self.get_logger().info(f'Received {self.subscription.topic_name}: {msg.data}')
-        if self.id != msg.data[2]:
-            self.id = msg.data[2]
-            self.laser_working_publisher()
+        #self.get_logger().info(f'Received {self.publisher_weed_trans_pos.topic_name}: {data_pub.data}')
+        #if self.id != msg.data[2]:
+        #    self.id = msg.data[2]
+        #    self.laser_working_publisher()
         # Process received data
         '''
         Get data from desired position
