@@ -22,11 +22,11 @@ class LaserPositionPublisher(Node):
         self.subscription  # Prevent unused variable warning
         self.timer_interval = 0.1
         self.timer = self.create_timer(self.timer_interval, self.publish_desired_value)
-        self.x_weed:float = 202.0
-        self.y_weed:float = 202.0
+        self.x_weed:float = 100.0
+        self.y_weed:float = 200.0
 
         self.x_laser:float = 100.0
-        self.y_laser:float = 100.0
+        self.y_laser:float = 200.0
 
         self.x_speed:float = 50.0
         self.y_speed:float = 50.0
@@ -38,23 +38,25 @@ class LaserPositionPublisher(Node):
         y_diff:float = self.y_weed-self.y_laser
         self.get_logger().info(f'position differences: {x_diff,y_diff}')
         if x_diff > 0: # TODO ersetzen durch sign funktion
-            x_next:float = self.control_saturation(x_diff,- self.x_speed,self.x_weed,self.x_laser) 
+            self.x_laser = self.control_saturation(x_diff,- self.x_speed,self.x_weed,self.x_laser) 
         else:
-            x_next = self.control_saturation(x_diff, self.x_speed,self.x_weed,self.x_laser)
+            self.x_laser = self.control_saturation(x_diff, self.x_speed,self.x_weed,self.x_laser)
         if y_diff > 0:
-            y_next:float = self.control_saturation(y_diff,- self.y_speed,self.y_weed,self.y_laser)
+            self.y_laser = self.control_saturation(y_diff,- self.y_speed,self.y_weed,self.y_laser)
         else:
-            y_next = self.control_saturation(y_diff, self.y_speed,self.y_weed,self.y_laser)
-        msg.data = [x_next,y_next]  # Replace with your logic
+            self.y_laser = self.control_saturation(y_diff, self.y_speed,self.y_weed,self.y_laser)
+        msg.data = [self.x_laser,self.y_laser]  # Replace with your logic
         self.publisher_.publish(msg)
         self.get_logger().info(f'Publishing Desired Value: {msg.data}')
 
     def control_saturation(self,difference:float,speed:float, weed_position:float,laser_position:float) -> float:
         result: float = 0.0
-        if abs(difference)< abs(speed*self.timer_interval):
+        if difference == 0.0:
+            result = laser_position
+        elif abs(difference) < abs(speed*self.timer_interval):
             result = weed_position
         else:
-            result = laser_position + math.copysign(1,speed) * difference + speed*self.timer_interval
+            result = laser_position - speed*self.timer_interval
         return result
 
     def control_callback(self, msg:Float32MultiArray):

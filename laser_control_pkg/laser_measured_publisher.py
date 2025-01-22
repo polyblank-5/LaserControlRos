@@ -28,6 +28,8 @@ class LaserMeasuredPublisher(Node):
             10
         )
         self.subscription_laser_position
+        self.laser_timer = None 
+        self.timer_active: bool = False
         #self.timer = self.create_timer(1.0, self.publish_measured_value)
         self.x_weed_transformed:float = -1.0
         self.y_weed_transformed:float = -1.0
@@ -35,14 +37,28 @@ class LaserMeasuredPublisher(Node):
         self.id:int = -1
 
     def laser_working_publisher(self):
+        self.timer_active = True
         msg = Bool()
         msg.data = True
         self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
-        time.sleep(2)
+        if self.laser_timer == None:
+            self.laser_timer = self.create_timer(3,self.laser_finished_weed_timer)
+        else:
+            self.laser_timer.reset()
+        #time.sleep(2) # TODO this is propably the problem
+        #msg.data = False
+        #self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
+        #self.publisher_laser_activity.publish(msg)
+    
+    def laser_finished_weed_timer(self):
+        msg = Bool()
         msg.data = False
-        self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
+        self.get_logger().info(f'Turning Laser off {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
+        self.laser_timer.cancel()
+        self.timer_active = False
+
     
     def laser_position_callback(self, msg:Float32MultiArray):
         """
@@ -51,7 +67,7 @@ class LaserMeasuredPublisher(Node):
         """
         self.get_logger().info(f'Getting Data from {self.subscription_laser_position.topic_name}: Laser {msg.data}')
         x_laser, y_laser = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
-        if math.sqrt((self.x_weed_transformed - x_laser) ** 2 + (self.y_weed_transformed - y_laser) ** 2) <= 0.5:
+        if math.sqrt((self.x_weed_transformed - x_laser) ** 2 + (self.y_weed_transformed - y_laser) ** 2) <= 0.5 and not self.timer_active:
             self.laser_working_publisher()
     
     def plant_measured_position_callback(self, msg:Float32MultiArray):
