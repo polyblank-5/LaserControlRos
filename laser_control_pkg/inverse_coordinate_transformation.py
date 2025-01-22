@@ -4,7 +4,7 @@ import math
 from typing import TypedDict, Literal
 
 
-class ConstantsBase(TypedDict):
+class ConstantsBase:
     # Coordinate limits
     x_min: int
     x_max: int
@@ -64,25 +64,24 @@ class ConstantsBase(TypedDict):
     l0Laserfeld: int
 
 
-class Constants:
+class Constants(ConstantsBase):
     def __init__(self, config_path: str = "constants.yaml"):
         """
-        Load constants from the YAML file.
+        Initialize the constants by loading them from a YAML file.
         Args:
             config_path (str): Path to the YAML configuration file.
         """
+        # Load YAML file
         with open(config_path, "r") as file:
-            self.data: ConstantsBase = yaml.safe_load(file)
+            data:dict = yaml.safe_load(file)
 
-    def __getattr__(self, item):
-        """Allows access to constants as attributes."""
-        if item in self.data:
-            return self.data[item]
-        raise AttributeError(f"'Constants' object has no attribute '{item}'")
+        # Assign constants as attributes of the class
+        for key, value in data.items():
+            setattr(self, key, value)
 
-    def __repr__(self):
-        """Print all constants."""
-        return "\n".join(f"{key}: {value}" for key, value in self.data.items())
+    def __repr__(self) -> str:
+        """String representation of all constants for debugging."""
+        return "\n".join(f"{key}: {value}" for key, value in self.__dict__.items())
 
 class InverseCoordinateTransformation():
     def __init__(self):
@@ -92,7 +91,7 @@ class InverseCoordinateTransformation():
         kmx = max(min(kmx, self.C.x_max), self.C.x_min)
         kmy = max(min(kmy, self.C.y_max), self.C.y_min)
         kmz = max(min(kmz, self.C.z_max), self.C.z_min)
-
+        
         achswerte = [
             self.inv_kin_rechts(kmx, kmy, kmz),
             self.inv_kin_links(kmx, kmy, kmz),
