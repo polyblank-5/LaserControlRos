@@ -86,7 +86,7 @@ class Constants(ConstantsBase):
 class InverseCoordinateTransformation():
     def __init__(self):
         self.C = Constants("")
-    def inv_kin_km(self, kmx, kmy, kmz):
+    def inv_kin_km(self, kmx, kmy, kmz = 0):
         """Inverse Kinematics calculation."""
         kmx = max(min(kmx, self.C.x_max), self.C.x_min)
         kmy = max(min(kmy, self.C.y_max), self.C.y_min)

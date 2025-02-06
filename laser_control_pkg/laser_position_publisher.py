@@ -3,6 +3,8 @@ from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 from laser_measured_publisher import LaserMeasuredPublisher
 import math
+from inverse_coordinate_transformation import Constants, InverseCoordinateTransformation
+
 '''
 This node gets the positions from the weed list
 It checks if one of the weed is in the laser area
@@ -13,6 +15,8 @@ checks laser status to see if weed is killed
 class LaserPositionPublisher(Node):
     def __init__(self):
         super().__init__('laser_position_publisher')
+        constants_inverse= Constants('src/laser_control_pkg/config/config.yaml')
+        self.inverse_transform = InverseCoordinateTransformation(constants_inverse)
         self.publisher_ = self.create_publisher(Float32MultiArray, 'laser_position_publisher', 10)
         self.subscription = self.create_subscription(
             Float32MultiArray,

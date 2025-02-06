@@ -5,6 +5,7 @@ from std_msgs.msg import Bool
 from typing import List, Tuple
 import math
 import time 
+from inverse_coordinate_transformation import Constants, InverseCoordinateTransformation
 '''
 This node gets the weed to kill position and moves the laser in its direction
 if the laser is over the target the laser is switched on for 100 ms
@@ -13,6 +14,8 @@ after 100 ms laser is switched of
 class LaserMeasuredPublisher(Node):
     def __init__(self):
         super().__init__('laser_measured_publisher')
+        constants_inverse= Constants('src/laser_control_pkg/config/config.yaml')
+        self.inverse_transform = InverseCoordinateTransformation(constants_inverse)
         self.publisher_weed_trans_pos = self.create_publisher(Float32MultiArray, 'weed_position_laser_area', 10)
         self.publisher_laser_activity = self.create_publisher(Bool, 'laser_activation', 10)
         self.subscription_weed_position = self.create_subscription(
@@ -43,7 +46,7 @@ class LaserMeasuredPublisher(Node):
         self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
         if self.laser_timer == None:
-            self.laser_timer = self.create_timer(3,self.laser_finished_weed_timer)
+            self.laser_timer = self.create_timer(0.5,self.laser_finished_weed_timer)
         else:
             self.laser_timer.reset()
         #time.sleep(2) # TODO this is propably the problem
@@ -64,6 +67,7 @@ class LaserMeasuredPublisher(Node):
         """
         Get position of laser
         If laser over weed start lasering
+        transform position too robot coordiantes to perform the distance check
         """
         self.get_logger().info(f'Getting Data from {self.subscription_laser_position.topic_name}: Laser {msg.data}')
         x_laser, y_laser = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
