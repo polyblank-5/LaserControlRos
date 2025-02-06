@@ -15,8 +15,8 @@ checks laser status to see if weed is killed
 class LaserPositionPublisher(Node):
     def __init__(self):
         super().__init__('laser_position_publisher')
-        constants_inverse= Constants('src/laser_control_pkg/config/config.yaml')
-        self.inverse_transform = InverseCoordinateTransformation(constants_inverse)
+        constants_inverse= Constants('src/laser_control_pkg/config/constants.yaml')
+        self.inverse_transform:InverseCoordinateTransformation = InverseCoordinateTransformation(constants_inverse)
         self.publisher_ = self.create_publisher(Float32MultiArray, 'laser_position_publisher', 10)
         self.subscription = self.create_subscription(
             Float32MultiArray,
@@ -26,11 +26,13 @@ class LaserPositionPublisher(Node):
         self.subscription  # Prevent unused variable warning
         self.timer_interval = 0.1
         self.timer = self.create_timer(self.timer_interval, self.publish_desired_value)
+        
         self.x_weed:float = 100.0
         self.y_weed:float = 200.0
-
+        #self.x_weed, self.y_weed, _ = self.inverse_transform.inv_kin_km(100.0,200.0)
         self.x_laser:float = 100.0
         self.y_laser:float = 200.0
+        #self.x_laser, self.y_laser, _ = self.inverse_transform.inv_kin_km(100.0,200.0)
 
         self.x_speed:float = 50.0
         self.y_speed:float = 50.0
@@ -65,7 +67,8 @@ class LaserPositionPublisher(Node):
 
     def control_callback(self, msg:Float32MultiArray):
         #self.get_logger().info(f'Received Control Input: {msg.data}')
-        self.x_weed,self.y_weed  = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
+        self.x_weed,self.y_weed = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
+        #self.x_weed,self.y_weed, _  = self.inverse_transform.inv_kin_km(msg.data[0],msg.data[1])
 
 
 

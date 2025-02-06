@@ -14,7 +14,7 @@ after 100 ms laser is switched of
 class LaserMeasuredPublisher(Node):
     def __init__(self):
         super().__init__('laser_measured_publisher')
-        constants_inverse= Constants('src/laser_control_pkg/config/config.yaml')
+        constants_inverse= Constants('src/laser_control_pkg/config/constants.yaml')
         self.inverse_transform = InverseCoordinateTransformation(constants_inverse)
         self.publisher_weed_trans_pos = self.create_publisher(Float32MultiArray, 'weed_position_laser_area', 10)
         self.publisher_laser_activity = self.create_publisher(Bool, 'laser_activation', 10)
@@ -70,7 +70,9 @@ class LaserMeasuredPublisher(Node):
         transform position too robot coordiantes to perform the distance check
         """
         self.get_logger().info(f'Getting Data from {self.subscription_laser_position.topic_name}: Laser {msg.data}')
-        x_laser, y_laser = LaserMeasuredPublisher.transform_position(msg.data[0],msg.data[1])
+        x_laser = msg.data[0]
+        y_laser = msg.data[1]
+        self.get_logger().info(f'position differences {self.x_weed_transformed-x_laser}, {self.y_weed_transformed-y_laser}')
         if math.sqrt((self.x_weed_transformed - x_laser) ** 2 + (self.y_weed_transformed - y_laser) ** 2) <= 0.5 and not self.timer_active:
             self.laser_working_publisher()
     
@@ -79,6 +81,7 @@ class LaserMeasuredPublisher(Node):
         Publish transformed plant position
         """
         self.x_weed_transformed, self.y_weed_transformed = LaserMeasuredPublisher.transform_position(float(msg.data[0]),float(msg.data[1]))
+        #self.x_weed_transformed, self.y_weed_transformed, _ = self.inverse_transform.inv_kin_km(float(msg.data[0]),float(msg.data[1]))
         data_pub = Float32MultiArray()
         data_pub.data = [self.x_weed_transformed, self.y_weed_transformed]
         self.publisher_weed_trans_pos.publish(data_pub)

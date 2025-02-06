@@ -84,8 +84,8 @@ class Constants(ConstantsBase):
         return "\n".join(f"{key}: {value}" for key, value in self.__dict__.items())
 
 class InverseCoordinateTransformation():
-    def __init__(self):
-        self.C = Constants("")
+    def __init__(self, constants:Constants):
+        self.C = constants
     def inv_kin_km(self, kmx, kmy, kmz = 0):
         """Inverse Kinematics calculation."""
         kmx = max(min(kmx, self.C.x_max), self.C.x_min)
