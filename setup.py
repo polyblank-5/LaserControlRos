@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'laser_desired_publisher = laser_control_pkg.laser_desired_publisher:main',
             'laser_measured_publisher = laser_control_pkg.laser_measured_publisher:main',
+            'laser_control_service = laser_control_pkg.laser_control_service:main'
         ],
     },
 )

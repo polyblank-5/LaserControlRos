@@ -3,6 +3,11 @@ from rclpy.node import Node
 from std_msgs.msg import Float64, Float32MultiArray
 from std_msgs.msg import Bool
 from typing import List, Tuple
+from std_srvs.srv import Trigger,Trigger_Request,Trigger_Response
+
+from rclpy.task import Future
+
+
 import math
 import time 
 from inverse_coordinate_transformation import Constants, InverseCoordinateTransformation
@@ -30,6 +35,20 @@ class LaserMeasuredPublisher(Node):
             self.laser_position_callback,
             10
         )
+
+        self.activate_client = self.create_client(Trigger, '/laser_control/activate_laser')
+        self.deactivate_client = self.create_client(Trigger, '/laser_control/deactivate_laser')
+
+        # Wait for the services to be available
+        self.get_logger().info('Waiting for laser control services...')
+        self.activate_client.wait_for_service()
+        self.deactivate_client.wait_for_service()
+        self.get_logger().info('Laser control services available.')
+
+        # Execute test requests
+        self.send_activate_request()
+        self.send_deactivate_request()
+
         self.subscription_laser_position
         self.laser_timer = None 
         self.timer_active: bool = False
@@ -45,6 +64,7 @@ class LaserMeasuredPublisher(Node):
         msg.data = True
         self.get_logger().info(f'Publishing Data to {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
+        self.send_activate_request()
         if self.laser_timer == None:
             self.laser_timer = self.create_timer(0.5,self.laser_finished_weed_timer)
         else:
@@ -59,6 +79,7 @@ class LaserMeasuredPublisher(Node):
         msg.data = False
         self.get_logger().info(f'Turning Laser off {self.publisher_laser_activity.topic_name}: Laser {msg.data}')
         self.publisher_laser_activity.publish(msg)
+        self.send_deactivate_request()
         self.laser_timer.cancel()
         self.timer_active = False
 
@@ -105,6 +126,39 @@ class LaserMeasuredPublisher(Node):
         
         
         '''
+
+    def send_activate_request(self):
+        """Send activation request to the service."""
+        request = Trigger.Request()
+        self.get_logger().info('Sending laser activation request...')
+        future = self.activate_client.call_async(request)
+        future.add_done_callback(self.handle_activate_response)
+
+    def handle_activate_response(self, future:Future):
+        """Handle response from the activate service."""
+        try:
+            response:Trigger_Response = future.result()
+            self.get_logger().info(f'Activate Response: success={response.success}, message="{response.message}"')
+        except Exception as e:
+            self.get_logger().error(f'Failed to call activate service: {str(e)}')
+
+    def send_deactivate_request(self):
+        """Send deactivation request to the service."""
+        request = Trigger.Request()
+        self.get_logger().info('Sending laser deactivation request...')
+        future = self.deactivate_client.call_async(request)
+        future.add_done_callback(self.handle_deactivate_response)
+
+    def handle_deactivate_response(self, future:Future):
+        """Handle response from the deactivate service."""
+        try:
+            response:Trigger_Response = future.result()
+            self.get_logger().info(f'Deactivate Response: success={response.success}, message="{response.message}"')
+        except Exception as e:
+            self.get_logger().error(f'Failed to call deactivate service: {str(e)}')
+
+
+
     def transformed_weed_position_publisher(self):
         pass
     
